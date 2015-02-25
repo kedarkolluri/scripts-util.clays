@@ -1,0 +1,172 @@
+# 4 layer nanoparticle of K-illite
+
+variable Tdesired equal 900
+variable rampLength equal 100000
+variable Tstart equal 100
+variable runLength equal 100000
+variable xReplica equal 1
+variable yReplica equal 1
+
+units metal #defines the units: time in ps, distances in Angstrom, energies in eV, etc.
+
+dimension 3 #3-D system
+
+atom_style full
+
+#LJ+coulomb solved up to 15 Angstrom, coulomb solved in k-space beyond 15 A
+
+pair_style lj/cut/coul/long 15.0
+
+#Lorentz-Berthelot combining rules for the LJ interactions
+pair_modify mix arithmetic
+
+# Bond and angles exist
+bond_style harmonic
+#angle_style harmonic
+
+#increasing the page size as the distance used is 15 angstorm
+# ??? The values are arbitrary for now; should try lower values
+neigh_modify one 50000 page 50000000
+
+#Setting up the system
+
+#input file
+#There should be an accompanying file named "cutoff_file.illite" that contains
+# the what atoms are what types - please see that; if it's not there
+# please reach me at kedar.kolluri@gmail.com
+
+read_data dat_lammps.test_data
+
+#Lennard-Jones pair coefficients for all atom types (the units are eV and Angstrom)
+# please see comment for read_data command for details on what atom is what type
+
+pair_coeff      1       1       7.98102e-8      3.30203 #Si_base_tet-Si_base_tet
+#pair_coeff     1       1       0 0
+
+pair_coeff      2       2       7.98102e-8      3.30203 #Si_oct-Si_oct
+#pair_coeff      2       2       0 0
+
+pair_coeff      3       3       5.76646e-8      4.27124 #Al_oct-Al_oct
+#pair_coeff     3       3       0 0
+
+pair_coeff      4       4       5.76646e-8      4.27124 #Al_tet-Al_tet
+#pair_coeff     4       4       0 0
+
+pair_coeff      5       5       6.73853e-3      3.16556 #O_regular-O_regular
+#pair_coeff     5       5       0 0
+
+pair_coeff      6       6       6.73853e-3      3.16556 #O_hydroxyl-O_hydroxly
+#pair_coeff     6       6       0 0
+
+pair_coeff      7       7       4.337e-3        3.33200 #K from Dang (1995)
+#pair_coeff     7       7       0 0
+
+pair_coeff      8       8       0.0             0.00000 #H_hydroxyl-H_hydroxyl
+
+pair_coeff      9       9       6.73853e-3      3.16556 #O_bridge-O_bridge
+#pair_coeff     9       9       0 0
+
+pair_coeff      10      10      0.0             0.00000 #dummy - no such type exists
+
+
+#Begin- Info from Laura's matlab file
+#bondcoeffs = [1, 24.0291, 1.0; 2, 24.0291, 1.0; 3, 0.0, 1.65;...
+#              4.0, 0.0, 2.05; 5, 24.0291, 1.0]; %Bond coefficients
+#where 1. O-H (6-9), 2. O-He(NA), 3. Si-Oe(NA), 4. Al-Oe(NA), 5. Hw-Ow(NA)
+
+#anglecoeffs = [1, 1.30090, 109.47; 2, 1.30090, 109.47; 3, 1.98472, 109.47;...
+#                4, 1.98472, 109.47]; %Angle coefficients
+#where % Angle types: 1. Si-O-H (1, 2), 2. Al-O-H (3, 4), 3. He-O-He(NA), 4. Hw-Ow-Hw(NA)
+#End- Info is from Laura's matlab file
+
+#relevant bond information for this case
+bond_coeff 1 24.0291 1.0
+#bond_coeff 1 0.0 0.0
+
+#relevant angle information for this case
+#angle_coeff 1 1.30090 109.47
+#angle_coeff 2 1.30090 109.47
+#angle_coeff 3 1.98472 109.47
+#angle_coeff 4 1.98472 109.47
+#angle_coeff 1 0 0
+#angle_coeff 2 0 0
+#angle_coeff 3 0 0
+#angle_coeff 4 0 0
+
+#k-space solver parameters (for electrostatic interactions)
+kspace_style pppm 1e-5
+
+
+minimize 0.0 0.0 1000 100000 
+minimize 0.0 0.0 1000 100000 
+minimize 0.0 0.0 1000 100000 
+minimize 0.0 0.0e-8 1000 100000
+
+replicate ${xReplica} ${yReplica} 1
+
+#equations of motion solved with the Verlet algorithm
+run_style verlet
+
+
+#define atoms that will move
+#for now, all atoms are moving but there will be a problem with that
+group mobile type 1 2 3 4 5 6 7 8 9 10
+
+
+#use only temp of mobile atoms so that appropriate velocity is assigned to them
+#otherwsie average velocity will be much lower and actual simulation temp will be much lower than desired simulation temp
+compute mobile_temp mobile temp
+
+#compute stress (all contributions) for only mobile atoms
+# don't know what to do with pressure, really but lets just compute for now
+compute mobile_stress mobile stress/atom mobile_temp
+
+# pressure in GPa
+variable press_gpa equal press*0.0001
+
+compute energy all pe/atom
+compute pe all reduce sum c_energy
+
+compute bond_energy all pe/atom bond
+compute ebond all reduce sum c_bond_energy
+
+group katoms type 7
+
+compute katom_disp katoms displace/atom
+compute max_katom_disp all reduce max c_katom_disp[4]
+
+compute allatom_disp all displace/atom
+compute max_allatom_disp all reduce max c_allatom_disp[4]
+
+#logging simulation data
+thermo_style custom step etotal ke enthalpy temp v_press_gpa c_max_allatom_disp c_max_katom_disp cpu
+
+#frequency with which the thermodynamic output will be reported
+thermo 1
+
+velocity all create ${Tstart} 4945790 rot yes mom yes dist uniform  
+timestep 0.001
+fix nvt_warmup all nvt temp ${Tstart} ${Tdesired} 0.05
+fix momfix all momentum 5 linear 1 1 1 angular
+run ${rampLength}
+
+unfix nvt_warmup
+unfix momfix
+
+reset_timestep ${rampLength}
+
+fix nvt_run all nvt temp ${Tdesired} ${Tdesired} 0.05
+fix momfix all momentum 5 linear 1 1 1 angular
+
+dump save1 all xyz 5000 dat_vesta.*.xyz.gz
+#dump save1 all custom 5000 dat.*.xyz.gz element x y z q type c_energy
+dump save2 all custom 5000 dat.*.gz id type element q xs ys zs xu yu zu vx vy vz c_energy c_allatom_disp[4]
+#dump save2 all cfg 5000 dat.*.cfg mass type xs ys zs vx vy vz id type c_energy c_bond_energy x y z
+dump_modify save1 element Si Si Al Al O Oa K H Ob D # D is for Dummy - does not exist
+dump_modify save2 element Si Si Al Al O Oa K H Ob D # D is for Dummy - does not exist
+
+run ${runLength}
+undump save1
+undump save2
+
+
