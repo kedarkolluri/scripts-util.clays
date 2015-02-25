@@ -4,6 +4,7 @@
 # where LMPINPUT is any string of your choice but we recommend that you start with 0
 # for example `dat_lammps.0` is an acceptable file but `dat_lammps` is not
 #1 starting number of the lammps input file
+
 current=$1
 
 ## You can change below parameters to suit your input, lammps, and output constraints
