@@ -25,6 +25,41 @@ lmpmetadata2="metadata2.dat"
 lmpdataout=$lmpdataout1.gz
 
 thisCommand=$0
+minimize=1 # 0 is false, 1 is true 
+tmp=500
+while [ $# -gt 0 ]
+do
+    case $1 in
+	-minimize)
+	    minimize=1
+	    shift
+	    ;;
+	-MC)
+            minimize=0
+	    shift
+	    echo $tmp
+	    if [ $(echo $tmp | awk 'BEGIN {ret = 0} {if ($1*1> 0) ret=1;} END{print ret}') -ne 1 ]
+	    then 
+		echo "the parameter after MC should be a temp (in Kelvin), which is a number"
+		echo "example: -MC 1200"
+		exit 1
+	    else
+		tmp=$1
+		echo "temperature is" $tmp
+	    fi
+	    shift
+            ;;
+	*)
+	    if [ $current -ne $1 ]
+	    then
+		echo "Unknown argument $1... assuming that it is the start " >&2
+		exit 1
+	    fi
+	    shift
+	    ;;
+    esac
+done
+
 
 echo " "
 echo "USAGE example :" $thisCommand "0"
@@ -50,26 +85,40 @@ echo " "
 echo "NOTE: If any these are different, please change them in this script before running it"
 echo "***"
 
-if [ -z "$1" ]
-  then
-    echo " "
-    echo "INPUT ERROR: No argument supplied.. please read above"
-    echo " "
-    exit
+if ! [[ $current =~ ^[0-9]+$ ]] ; 
+then 
+    #exec >&2; 
+    echo "datafile suffix (1st parameter) is not a number"
+    echo ""
+    exit 1
+else   
+    if ! [[ -e $lammpsPrefix.$current ]]
+    then
+	echo "file" $lammpsPrefix.$current "does not exist"
+	echo ""
+	exit 1
+    fi
 fi
 
-awk 'BEGIN {read="true"} {if( ($1!="Atoms")&&(read=="true") ) { print $0} else { read = "false"} }' $lammpsPrefix.$current  > $lmpmetadata1
+if ! type $lmpexec > /dev/null 2>&1; 
+then 
+    echo "lammps executable" $lmpexec "does not exist in the path"
+    echo ""
+    exit 1
+fi
+
+tr -d $'\r' < $lammpsPrefix.$current | awk 'BEGIN {read="true"} {if( ($1!="Atoms")&&(read=="true") ) { print $0} else { read = "false"} }' > $lmpmetadata1
 echo "Atoms" >> $lmpmetadata1
 echo " " >> $lmpmetadata1
 
-awk 'BEGIN {read="false"} 
+tr -d $'\r' < $lammpsPrefix.$current | awk 'BEGIN {read="false"} 
 {
 if( ($1=="Bonds") || ($1=="Angles") ) { read="true" }
 if(read=="true")
 {
 print $0
 }
-}' $lammpsPrefix.$current  > $lmpmetadata2
+}' > $lmpmetadata2
 
 
 if [ $current -eq 0 ]
@@ -88,24 +137,43 @@ cp $lammpsPrefix.$current  $lammpsPrefix.try
 
 $lmpexec -in $lmpinput -screen none
 
+mv $lmpdataout dat.$current.gz
+
 # get the energy out
 prevEnergy=$(awk '{if($1==50000) print $2}' $lmpoutput)
 
 #echo "prev energy is " $prevEnergy
 
 tmpExit=1
+iter=0
 while [ $tmpExit -eq 1 ]
 do
-    tmpExit=0
+
+    if [ $minimize -eq 1 ] 
+    then
+	tmpExit=0
+    fi
+
     echo "finding a distribution better than that in" $lammpsPrefix.$current
     #store the ids of ions in a string to be accessed by awk
-    kions=$(awk '{if($3=='$kionID') print $1}' $lammpsPrefix.$current)
+   
+
+    kions=$(gunzip -c dat.$current.gz | awk '{if($3=='$kionID') printf("%lf %d\n", $15,$1)}' | sort -nr | awk '{print $2}')
     nkions=$(echo $kions | awk '{print NF}')
+
+    xkions=$(gunzip -c dat.$current.gz | awk '{if($3=='$kionID') printf("%lf %d %lf\n", $15,$1, $9)}' | sort -nr | awk '{print $3}')
+    ykions=$(gunzip -c dat.$current.gz | awk '{if($3=='$kionID') printf("%lf %d %lf\n", $15,$1, $10)}' | sort -nr | awk '{print $3}')
+    zkions=$(gunzip -c dat.$current.gz | awk '{if($3=='$kionID') printf("%lf %d %lf\n", $15,$1,$11)}' | sort -nr | awk '{print $3}')
     
-    xkions=$(awk '{if($3=='$kionID') print $5}' $lammpsPrefix.$current)
-    ykions=$(awk '{if($3=='$kionID') print $6}' $lammpsPrefix.$current)
-    zkions=$(awk '{if($3=='$kionID') print $7}' $lammpsPrefix.$current)
-    
+
+#    kions=$(awk '{if($3=='$kionID') print $1}' $lammpsPrefix.$current)
+#    nkions=$(echo $kions | awk '{print NF}')
+#    
+#    xkions=$(awk '{if($3=='$kionID') print $5}' $lammpsPrefix.$current)
+#    ykions=$(awk '{if($3=='$kionID') print $6}' $lammpsPrefix.$current)
+#    zkions=$(awk '{if($3=='$kionID') print $7}' $lammpsPrefix.$current)
+#    
+
     #echo "ions are " $nkions
     
     gions=$(awk '{if($3=='$gionID') print $1}' $lammpsPrefix.$current)
@@ -117,20 +185,15 @@ do
     
     #echo "ghosts are " $ngions
     
-    ## select one kion randomly
-    #skion=$(echo $kions | awk '{print $('$RANDOM'%NF)}')
-    ## select one gion randomly
-    #sgion=$(echo $gions | awk '{print $('$RANDOM'%NF)}')
-    
-    ###
-    # alternately, we can do iterations 1 through nkions and ngions but its not implemented here yet
-    ###
-    
     iterKion=1
 
 
     while [ $iterKion -le $nkions ]
     do
+#	if [ $minimize -eq 0 ]
+#	then
+#	    iterKion=$(echo $iterKion | awk '{if(NR==1) print '$RANDOM'%'$nkions'+1}')
+#	fi
 	skion=$(echo $kions | awk '{print $('$iterKion')}') 
 	sxkion=$(echo $xkions | awk '{print $('$iterKion')}') 
 	sykion=$(echo $ykions | awk '{print $('$iterKion')}') 
@@ -139,6 +202,10 @@ do
 	iterGion=1	
 	while [ $iterGion -le $ngions ]
 	do
+#	    if [ $minimize -eq 0 ]
+#	    then
+#		iterGion=$(echo $iterGion | awk '{if(NR==1) print '$RANDOM'%'$ngions'+1}')
+#	    fi
 	    sgion=$(echo $gions | awk '{print $('$iterGion')}') 
 	    sxgion=$(echo $xgions | awk '{print $('$iterGion')}') 
 	    sygion=$(echo $ygions | awk '{print $('$iterGion')}') 
@@ -147,7 +214,10 @@ do
 	    #echo "trying swap " $skion $sgion $iterKion $iterGion
 	    
 	    havetried=$(awk 'BEGIN{ret=0}{if( ($1=='$skion') && ($2=='$sgion')) ret=1} END {print ret}' tried.pairs)
-	    if [ $havetried -eq 0 ]
+
+	    if [ $minimize -eq 0 ]; then havetried=0; fi
+
+	    if [ $havetried -eq 0 ] 
 	    then
 #		echo "trying swap " $skion $sgion $iterKion $iterGion
 		#echo "not tried.. going ahead with an attempt"
@@ -155,11 +225,11 @@ do
 	    
 		#rm dat_lammps.try
 		awk '{
-	        if( ($1=='$skion') && ($3==7) )
+	        if( ($1=='$skion') && ($3=='$kionID') )
 		{
                    printf("%d %d %d %lf %lf %lf %lf\n", $1, $2, $3, $4, '$sxgion', '$sygion', '$szgion')
 
-		}else if( ($1=='$sgion') && ($3==11) )
+		}else if( ($1=='$sgion') && ($3=='$gionID') )
 		{
                    printf("%d %d %d %lf %lf %lf %lf\n", $1, $2, $3, $4, '$sxkion', '$sykion', '$szkion')
 
@@ -171,6 +241,7 @@ do
 	    }' $lammpsPrefix.$current > $lammpsPrefix.try
 
 		#echo "create the lammps file here... running lammps on it now"
+		iter=$(($iter+1))
 		$lmpexec -in $lmpinput -screen none
 
 		energyExists=$(awk 'BEGIN{ret=0}{if($1==50000) ret=1} END{print ret}' $lmpoutput)
@@ -186,11 +257,24 @@ do
 		    exit
 		fi
 
+
 		#	    echo "prev and new energies are " $prevEnergy $currEnergy
 		# 0 is false.. anything else is true
-		accept=$(echo $prevEnergy $currEnergy | awk 'BEGIN{ret=0}{if($1 > $2) ret=1} END {print ret}')
 		ediff=$(echo $prevEnergy $currEnergy | awk '{print $2-$1}')
-		echo $skion $sgion $ediff >> tried.pairs
+		
+		accept=0 #default don't accept 
+                if [ $minimize -eq 1 ]
+		then 
+		    accept=$(echo $prevEnergy $currEnergy | awk 'BEGIN{ret=0}{if($1 > $2) ret=1} END {print ret}')
+		else
+		    retval=$(echo $prevEnergy $currEnergy | awk 'BEGIN{ret=0; prob=0;prob2=0;}{ prob= exp(-1.0*11609.9751*($2-$1)/'$tmp'); if (prob>=1) { ret=1} else { srand('$(date +%s)'); prob2=rand(); if (prob2 < prob) ret=1 }; } END {print ret " " prob " " prob2}')
+
+		    accept=$(echo $retval | awk '{print $1}')
+
+#		    accept=$(echo $prevEnergy $currEnergy | awk 'BEGIN{ret=0}{ prob= exp(-1.0*11609.9751*($2-$1)/'$tmp'); if (prob>=1) { ret=1} else { srand('$(date +%s)'); if (rand() > prob) ret=1 }; } END {print ret}')
+		fi
+		testcurr=$(echo $current | awk '{print $1+'$accept'}')
+		echo $skion $sgion $ediff $accept $retval $testcurr $iter >> tried.pairs
 		if [ $accept -eq 1 ]
 		then
 		    current=$(($current+1))
@@ -257,4 +341,4 @@ done
 ## commands for extracting energies for dat.*.gz files 
 ## note that there is dat.0.gz existing!
 
-#for file in {0..30}; do if [ -e dat.$file.gz ]; then gunzip -c dat.$file.gz | awk 'BEGIN{sum=0}{if($1*3>0) sum=sum+$14} END{printf("%d %lf\n", '$file',sum)}'; fi; done;
+#for file in {0..30}; do if [ -e dat.$file.gz ]; then gunzip -c dat.$file.gz | awk 'BEGIN{sum=0}{if($1*3>0) sum=sum+$15} END{printf("%d %lf\n", '$file',sum)}'; fi; done;
