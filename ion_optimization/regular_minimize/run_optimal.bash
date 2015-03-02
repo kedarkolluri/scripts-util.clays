@@ -27,8 +27,15 @@ lmpdataout=$lmpdataout1.gz
 thisCommand=$0
 minimize=1 # 0 is false, 1 is true 
 tmp=500
+nloops=1
+totalsize=$#
 while [ $# -gt 0 ]
 do
+    if [ $totalsize -eq $# ]
+    then
+	shift
+    fi
+
     case $1 in
 	-minimize)
 	    minimize=1
@@ -49,12 +56,23 @@ do
 	    fi
 	    shift
             ;;
-	*)
-	    if [ $current -ne $1 ]
-	    then
-		echo "Unknown argument $1... assuming that it is the start " >&2
+	-loops)
+	    shift
+	    nloops=$1
+	    if [ $(echo $nloops | awk 'BEGIN {ret = 0} {if ($1*1> 0) ret=1;} END{print ret}') -ne 1 ]
+	    then 
+		echo "the parameter after loops should be an integer number (tip: use if you want more than 1)"
+		echo "example: -loop 2"
 		exit 1
+	    else
+		echo "number of times to loop is" $nloops
 	    fi
+	    shift
+	    ;;
+	*)
+	    echo ""
+	    echo "Unknown argument $1....ignoring "
+	    echo ""
 	    shift
 	    ;;
     esac
@@ -212,8 +230,8 @@ do
 	    szgion=$(echo $zgions | awk '{print $('$iterGion')}') 
 	    
 	    #echo "trying swap " $skion $sgion $iterKion $iterGion
-	    
-	    havetried=$(awk 'BEGIN{ret=0}{if( ($1=='$skion') && ($2=='$sgion')) ret=1} END {print ret}' tried.pairs)
+
+	    havetried=$(awk 'BEGIN{ret=0; sum=0}{if( ($1=='$skion') && ($2=='$sgion')) sum=sum+1} END {if (sum >= '$nloops') {ret=1}; print ret}' tried.pairs)
 
 	    if [ $minimize -eq 0 ]; then havetried=0; fi
 
