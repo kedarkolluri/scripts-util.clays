@@ -1,0 +1,37 @@
+types 11
+# first line should always be "types"
+# these are all possible element types and their corresponding symbols
+
+element_names 1 Si 2 Sia 3 Al 4 Ala 5 O 6 Oa 7 K 8 H 9 Ob 10 Ge 11 Gh
+element_weights 1 28.0855 2 28.0855 3 26.9815 4 26.9815 5 15.9994 6 15.9994 7 39.0983 8 1.007 9 15.9994 10 28.0855 11 39.0983
+element_charges 1 2.1 2 2.1 3 1.575 4 1.575 5 -1.05 6 -0.95 7 1.0 8 0.4250 9 -1.1688 10 2.1 11 0.0
+element_bonds 1 6 8
+
+element_angles 1 1 6 8
+element_angles 1 2 6 8 
+element_angles 2 3 6 8 
+element_angles 2 4 6 8
+
+# these are base paramater values for each type
+# this is a number based on which we will compute interatomic distances
+# we set this to constant value of Silicon (it can be anything for these kinds of systems)
+
+lattice_param_block 1 5.431 0 2 5.431 0 3 5.431 0 4 5.431 0 5 5.431 0 6 5.431 0 7 5.431 0 8 5.431 0 9 5.431 0 10 5.431 0 11 5.431 0
+
+# the ratios we should use for combinations (used from data from crystal maker)
+# I am using same values for Si, Al, and `Ge` even though there seem to be
+# different values for octahedral and tetrahedral sites
+# for Si-Si, we take diamond lattice parameter, For Al-Al, its fcc, and for K-K, its bcc values
+# lattice block (above command should be setup first)
+
+cutoffs 1 1 0.433 2 2 0.433 3 3 0.526 4 4 0.526 5 5 0.33 6 6 0.33 7 7 0.681 10 10 0.433 8 8 0.36 9 9 0.33 11 11 0.33
+cutoffs 1 2 0.433 1 3 0.433 1 4 0.433 1 5 0.396 1 6 0.396 1 7 0.433 1 10 0.433 1 8 0.36 1 9 0.396 1 11 0.396
+cutoffs 2 3 0.433 2 4 0.433 2 5 0.396 2 6 0.396 2 7 0.433 2 10 0.433 2 8 0.36 2 9 0.396 2 11 0.396
+cutoffs 3 4 0.433 3 5 0.396 3 6 0.396 3 7 0.433 3 10 0.433 3 8 0.36 3 9 0.396 3 11 0.396
+cutoffs 4 5 0.396 4 6 0.396 4 7 0.433 4 10 0.433 4 8 0.36 4 9 0.396 4 11 0.396
+cutoffs 5 6 0.33 5 7 0.396 5 10 0.433 5 8 0.27 5 9 0.33 5 11 0.396
+cutoffs 6 7 0.396 6 10 0.433 6 8 0.27 6 9 0.33 6 11 0.396
+cutoffs 7 10 0.433 7 8 0.36 7 9 0.396 7 11 0.396
+cutoffs 8 9 0.27 8 10 0.36 8 11 0.396
+cutoffs 9 10 0.433 9 11 0.396
+cutoffs 10 11 0.396

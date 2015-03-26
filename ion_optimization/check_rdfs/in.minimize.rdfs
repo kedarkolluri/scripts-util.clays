@@ -1,0 +1,47 @@
+# everything is done outside - this just minimizes the input data file
+
+units metal 
+
+dimension 3 
+atom_style full
+
+pair_style lj/cut/coul/long 15.0
+pair_modify mix arithmetic
+
+bond_style harmonic
+
+neigh_modify one 50000 page 50000000
+
+read_data dat_lammps.try
+
+pair_coeff      1       1       7.98102e-8      3.30203 #Si_base_tet-Si_base_tet
+pair_coeff      2       2       7.98102e-8      3.30203 #Si_oct-Si_oct
+pair_coeff      3       3       5.76646e-8      4.27124 #Al_oct-Al_oct
+pair_coeff      4       4       5.76646e-8      4.27124 #Al_tet-Al_tet
+pair_coeff      5       5       6.73853e-3      3.16556 #O_regular-O_regular
+pair_coeff      6       6       6.73853e-3      3.16556 #O_hydroxyl-O_hydroxly
+pair_coeff      7       7       4.337e-3        3.33200 #K from Dang (1995)
+pair_coeff      8       8       0.0             0.00000 #H_hydroxyl-H_hydroxyl
+pair_coeff      9       9       6.73853e-3      3.16556 #O_bridge-O_bridge
+pair_coeff      10      10      0.0             0.00000 #dummy - no such type exists
+pair_coeff      11      11      0.0             0.00000 #Ghosts - these exist
+
+bond_coeff 1 24.0291 1.0
+#bond_coeff 1 0.0 0.0
+
+kspace_style pppm 1e-5
+
+thermo_style custom step etotal
+
+compute energy all pe/atom
+compute pe all reduce sum c_energy
+variable a equal 7
+compute krdfs all rdf 50 $a 1 $a 2 $a 3 $a 4 $a 5 $a 6 $a 7 $a 8 $a 9 $a 10 $a 11
+#compute krdfs all rdf 50 7 1 7 2 7 3 7 4 7 5 7 6 7 8 7 9 7 10 7 11
+fix 1 all ave/time 1 1 10 c_krdfs file krdf.data mode vector
+
+
+thermo 1
+
+
+run 5

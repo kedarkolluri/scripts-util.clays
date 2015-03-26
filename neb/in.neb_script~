@@ -1,0 +1,70 @@
+# 4 layer nanoparticle of K-illite
+units metal 
+
+dimension 3
+
+atom_style full
+
+#atom_modify map array
+atom_modify sort 0 0.0
+
+pair_style lj/cut/coul/long 15.0
+pair_modify mix arithmetic
+
+bond_style harmonic
+
+neigh_modify one 50000 page 50000000
+
+read_data dat_lammps.begin
+
+pair_coeff      1       1       7.98102e-8      3.30203 #Si_base_tet-Si_base_tet
+pair_coeff      2       2       7.98102e-8      3.30203 #Si_oct-Si_oct
+pair_coeff      3       3       5.76646e-8      4.27124 #Al_oct-Al_oct
+pair_coeff      4       4       5.76646e-8      4.27124 #Al_tet-Al_tet
+pair_coeff      5       5       6.73853e-3      3.16556 #O_regular-O_regular
+pair_coeff      6       6       6.73853e-3      3.16556 #O_hydroxyl-O_hydroxly
+pair_coeff      7       7       4.337e-3        3.33200 #K from Dang (1995)
+pair_coeff      8       8       0.0             0.00000 #H_hydroxyl-H_hydroxyl
+pair_coeff      9       9       6.73853e-3      3.16556 #O_bridge-O_bridge
+pair_coeff      10      10      0.0             0.00000 #dummy - no such type exists
+pair_coeff      11      11      0.0             0.00000 #dummy - no such type exists
+
+bond_coeff 1 24.0291 1.0
+
+kspace_style pppm 1e-5
+
+compute energy all pe/atom
+compute pe all reduce sum c_energy
+
+# more than usual!
+timestep 0.02
+
+# some variable per processor - 96 is the max it will take before breaking down
+# we don't want 96 replica anyways
+variable u uloop 96
+
+shell mkdir data
+
+dump save2 all custom 200 data/dat.*.$u.gz id type element q xs ys zs xu yu zu vx vy vz c_energy
+
+dump_modify save2 element Si Sia Al Ala O Oa K H Ob D Gh # D is for Dummy - does not exist
+
+
+# group of NEB atoms (atoms the experience NEB force)
+#region nebsurround block INF INF INF INF 5 15
+
+region nebsurround block INF INF INF INF INF INF
+
+group nebatoms region nebsurround
+
+fix nebforce nebatoms neb 3.0
+
+thermo 100
+
+min_style quickmin
+
+
+#partition yes 1 fix beginfreeze all setforce 0.0 0.0 0.0
+#partition yes 24 fix endfreeze all setforce 0.0 0.0 0.0
+
+neb 0.0 0.0 20 2000 1 final end.coords
