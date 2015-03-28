@@ -238,3 +238,29 @@ do
   done
   cd ../
 done
+
+
+
+
+for file in *
+do
+  if [ -d $file ]
+  then
+    plotfile=plot.plot.$file
+
+    echo "" > $plotfile
+
+    #echo "set terminal postscript color solid enhanced 'Helvetica' 24" >> $plotfile
+    #echo "set output 'nebplots.$file.ps'" >> $plotfile
+
+    for file2 in {1..200}
+    do
+      if [ -e $file/neb.en.$file2 ]
+      then
+        echo "set title '$file and $file2'" >> $plotfile
+        echo "plot '$file/neb.en.$file2' using 1:3 w lp lt -1 ps 2 pt 7 title '$file2'" >> $plotfile
+        echo "pause 7" >> $plotfile
+      fi
+    done
+  fi
+done
