@@ -150,6 +150,7 @@ then
     echo "creating a new tried.pairs file to store combinations that were tried"
     touch tried.pairs
 fi
+touch tried.pairs
 
 cp $lammpsPrefix.$current  $lammpsPrefix.try
 
