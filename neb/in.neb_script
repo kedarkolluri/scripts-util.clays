@@ -1,5 +1,5 @@
 # 4 layer nanoparticle of K-illite
-units metal 
+units metal
 
 dimension 3
 
@@ -67,4 +67,4 @@ min_style quickmin
 partition yes 1 fix beginfreeze all setforce 0.0 0.0 0.0
 #partition yes 24 fix endfreeze all setforce 0.0 0.0 0.0
 
-neb 0.0 0.0 20 2000 1 final end.coords
+neb 0.0 0.0 200 2000 1 final end.coords
