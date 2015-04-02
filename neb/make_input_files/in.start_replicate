@@ -11,8 +11,8 @@ bond_style harmonic
 
 neigh_modify one 50000 page 50000000
 
-read_data dat_lammps.0.gz
-replicate 2 2 2
+read_data dat_lammps.postMD.gz
+replicate 3 3 1
 
 pair_coeff      1       1       7.98102e-8      3.30203 #Si_base_tet-Si_base_tet
 pair_coeff      2       2       7.98102e-8      3.30203 #Si_oct-Si_oct
@@ -34,8 +34,8 @@ bond_coeff 1 24.0291 1.0
 #k-space solver parameters (for electrostatic interactions)
 kspace_style pppm 1e-5
 
-minimize 0.0 0.0 1000 100000 
-minimize 0.0 0.0 1000 100000 
+minimize 0.0 0.0 1000 100000
+minimize 0.0 0.0 1000 100000
 minimize 0.0 0.0 1000 100000
 
 compute energy all pe/atom
@@ -49,4 +49,3 @@ dump_modify save2 element Si Sia Al Ala O Oa K H Ob D Gh # D is for Dummy - does
 run 0
 
 undump save2
-
