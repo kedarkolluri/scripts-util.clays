@@ -104,26 +104,34 @@ awk '{if($1=="processing") {p = $4}; if($1=="atom") print p " " $3 " " $11 " " $
 
 
 ### preparing data for NEB -- BEGIN
+### PLEASE READ in FULL BEFORE RUNNING THIS-
+### It has all steps some of which you may not want to use every time!
+
 for file in {1..20}
 do
   cd $file/;
   pwd
   ### step 1:
-  # the file dat.0.gz is the starting point (from annealing)
-  # if MD was not done or dat_lammps.0.gz exists, skip this step and go to second step where the size is replicated if needed
-  lbnl_processor_exec.out start 0 end 2 interval 22 CUTOFF_FILE /Users/KedarKolluri/lib/cutoff_file.illite.coords-first SAVE_LAMMPS CHARGE MOLECULE > out.out 2>/dev/null
-  # change the file to something else so it is saved
-  awk 'BEGIN{tag=0} {if($1=="NeighborAnalyses"){if(tag==0) {tag=1;} else {tag=0;} } if(tag==1) print $0}' out.out | awk '{if(NR>1) print $0}' > input.data
-  mv dat.0.gz dat.postMD.gz
-  cp dat_lammps.0.gz dat_lammps.postMD.gz
+  ## the file dat.0.gz is the starting point (from annealing)
+  ## if MD was not done or dat_lammps.0.gz exists, skip this step and go to second step where the size is replicated if needed
+
+  #lbnl_processor_exec.out start 0 end 2 interval 22 CUTOFF_FILE /Users/KedarKolluri/lib/cutoff_file.illite.coords-first SAVE_LAMMPS CHARGE MOLECULE > out.out 2>/dev/null
+
+  ## change the file to something else so it is saved
+
+  #awk 'BEGIN{tag=0} {if($1=="NeighborAnalyses"){if(tag==0) {tag=1;} else {tag=0;} } if(tag==1) print $0}' out.out | awk '{if(NR>1) print $0}' > input.data
+  #mv dat.0.gz dat.postMD.gz
+  #cp dat_lammps.0.gz dat_lammps.postMD.gz
 
   ### step 2:
-  # run this step if we need to replicate the cell for whatever reasons (so that we can do NEB on bigger system where migration does not see it's image)
-  #lmp_git_openmpi_021415 -in /Users/KedarKolluri/Documents/projects/LBNL/expts/scripts/neb/make_input_files/in.start_replicate
+  ## run this step if we need to replicate the cell for whatever reasons (so that we can do NEB on bigger system where migration does not see it's image)
+  ## this should use dat_lammps.postMD.gz as input
+  ## please check before running
+  lmp_git_openmpi_021415 -in /Users/KedarKolluri/Documents/projects/LBNL/expts/scripts/neb/make_input_files/in.start_replicate -screen none -log log.replicate
 
   ### step 3:
-  # the file is now saved as dat.0.gz and converted to dat_lammps.0.gz which is then converted to dat_lammps.begin
-  #lbnl_processor_exec.out start 0 end 2 interval 22 CUTOFF_FILE /Users/KedarKolluri/lib/cutoff_file.illite.coords-first SAVE_LAMMPS CHARGE MOLECULE > out.out 2>&1
+  # #the file is now saved as dat.0.gz and converted to dat_lammps.0.gz which is then converted to dat_lammps.begin
+  lbnl_processor_exec.out start 0 end 2 interval 22 CUTOFF_FILE /Users/KedarKolluri/lib/cutoff_file.illite.coords-first SAVE_LAMMPS CHARGE MOLECULE > out.out 2>&1
 
   gunzip dat_lammps.0.gz
   mv dat_lammps.0 dat_lammps.begin
@@ -239,8 +247,29 @@ do
   cd ../
 done
 
-
-
+enfile="en.file.all"
+for file in *
+do
+  if [ -d $file ]
+  then
+    cd $file/
+    if [ -e $enfile ]
+      then
+        rm $enfile
+      fi
+    for file2 in *
+    do
+      filename="energy.neb.2000"
+      if [ -e $file2/energy.neb.2000 ]
+      then
+      awk '{ if (NR==1) {INIT=$2}; printf("%lf %lf %lf\n", $1, $2, $2-INIT)}' $file2/$filename > neb.en.$file2
+      awk '{if(NR==1){INIT=$2; MAX=$3}; if(MAX<$3) { MAX=$3}} END {printf("'$file2' %lf %lf %lf %lf\n", INIT, $2, MAX, (INIT+MAX-$2)) }' neb.en.$file2 >> test
+      fi
+    done
+    cat test | sort -n >> $enfile; rm test;
+    cd ../
+  fi
+done
 
 for file in *
 do
@@ -263,4 +292,26 @@ do
       fi
     done
   fi
+done
+
+# extract initial, final, and barriers
+awk '{if(NR==1){INIT=$2; MAX=$3}; if(MAX<$3) { MAX=$3}} END {printf("%lf %lf %lf %lf\n", INIT, $2, MAX, (INIT+MAX-$2)) }'
+
+
+for file in {1..20}
+do
+  echo "---" $file "---"
+  for file2 in $file/*
+  do
+    if [ -d $file2 ]
+      then
+      echo $file
+    fi
+  done
+done
+
+rm energies.all
+for file in {1..20}
+do
+  cat $file/barriers.collate.final | sort -n >> energies.all
 done
