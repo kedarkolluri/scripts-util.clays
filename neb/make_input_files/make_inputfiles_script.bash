@@ -1,3 +1,11 @@
+## This file creates multiple folders each
+## of which has 1 NEB path's initial and final states
+## This is run as part of another bash loop
+## That loops will prepare the system
+## in that, it will list of atoms to move and the distances they should be moved
+## As of April 2, that script is in script_create_anneal_multiple_Illite.bash
+## it should be 2 folders above this one!
+
 initfile="dat_lammps.begin"
 finalfile="dat_lammps.end"
 enstore="energies.data"
