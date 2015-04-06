@@ -31,7 +31,6 @@ pair_coeff      11      11      0.0             0.00000 #Ghost - no such type ex
 bond_coeff 1 24.0291 1.0
 #bond_coeff 1 0.0 0.0
 
-thermo 1
 #k-space solver parameters (for electrostatic interactions)
 kspace_style pppm 1e-5
 
