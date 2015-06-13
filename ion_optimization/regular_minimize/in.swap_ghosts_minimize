@@ -1,8 +1,8 @@
 # everything is done outside - this just minimizes the input data file
 
-units metal 
+units metal
 
-dimension 3 
+dimension 3
 
 atom_style full
 
@@ -34,8 +34,11 @@ kspace_style pppm 1e-5
 
 thermo_style custom step etotal
 
-minimize 0.0 0.0 1000 100000 
-minimize 0.0 0.0 1000 100000 
+group ghosts type 11
+
+fix ghmv ghosts setforce 0.0 0.0 0.0
+minimize 0.0 0.0 1000 100000
+minimize 0.0 0.0 1000 100000
 
 compute energy all pe/atom
 compute pe all reduce sum c_energy

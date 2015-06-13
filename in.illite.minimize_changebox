@@ -45,9 +45,29 @@ compute pe all reduce sum c_energy
 #run 0
 
 #undump save2
-
+thermo 10
+thermo_style custom step etotal enthalpy vol press pxx pyy pzz pxy pxz pyz lx ly lz xy xz yz
 minimize 0.0 0.0 1000 100000
-#minimize 0.0 0.0 1000 100000
+fix stressfree all box/relax x 0.0 y 0.0 z 0.0 xz 0.0 scalexy no scaleyz no vmax 0.001
+minimize 0.0 0.0 1000 100000
+unfix stressfree
+minimize 0.0 0.0 1000 100000
+fix stressfree all box/relax x 0.0 y 0.0 z 0.0 xz 0.0 scalexy no scaleyz no vmax 0.001
+minimize 0.0 0.0 1000 100000
+unfix stressfree
+minimize 0.0 0.0 1000 100000
+fix stressfree all box/relax x 0.0 y 0.0 z 0.0 xz 0.0 scalexy no scaleyz no vmax 0.001
+minimize 0.0 0.0 1000 100000
+unfix stressfree
+minimize 0.0 0.0 1000 100000
+fix stressfree all box/relax x 0.0 y 0.0 z 0.0 xz 0.0 scalexy no scaleyz no vmax 0.001
+minimize 0.0 0.0 1000 100000
+unfix stressfree
+minimize 0.0 0.0 1000 100000
+fix stressfree all box/relax x 0.0 y 0.0 z 0.0 xz 0.0 scalexy no scaleyz no vmax 0.001
+minimize 0.0 0.0 1000 100000
+unfix stressfree
+minimize 0.0 0.0 1000 100000
 #minimize 0.0 0.0 1000 100000
 
 

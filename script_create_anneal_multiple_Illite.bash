@@ -106,20 +106,22 @@ awk '{if($1=="processing") {p = $4}; if($1=="atom") print p " " $3 " " $11 " " $
 ### preparing data for NEB -- BEGIN
 ### PLEASE READ in FULL BEFORE RUNNING THIS-
 ### It has all steps some of which you may not want to use every time!
-
-for file in {4..6}
+###/Users/KedarKolluri/Documents/projects/LBNL/expts/base_structure/for_dft/collate/without_ghosts/for_neb
+for file in {0..28}
 do
+  if [ -d $file ]
+  then
   cd $file/;
   pwd
   ### step 1:
   ## the file dat.0.gz is the starting point (from annealing)
   ## if MD was not done or dat_lammps.0.gz exists, skip this step and go to second step where the size is replicated if needed
 
-  cp dat_lammps.postMD.gz dat_lammps.00.gz
-  gunzip dat_lammps.00.gz
-  lmp_openmpi_1214 -in /Users/KedarKolluri/Documents/projects/LBNL/expts/scripts/neb/make_input_files/in.illite.minimize -screen none -log log.minimize_replicated
-
-  mv dat.40000.gz dat.0.gz; rm dat_lammps.00;
+  #cp dat_lammps.postMD.gz dat_lammps.00.gz
+  #gunzip dat_lammps.00.gz
+  #lmp_openmpi_1214 -in /Users/KedarKolluri/Documents/projects/LBNL/expts/scripts/neb/make_input_files/in.illite.minimize -screen none -log log.minimize_replicated
+  ##-in /Users/KedarKolluri/Documents/projects/LBNL/expts/scripts/neb/make_input_files/in.illite.minimize -screen none
+  #mv dat.40000.gz dat.0.gz; rm dat_lammps.00;
 
   lbnl_processor_exec.out start 0 end 2 interval 22 CUTOFF_FILE /Users/KedarKolluri/lib/cutoff_file.illite.coords-first SAVE_LAMMPS CHARGE MOLECULE > out.out 2>/dev/null
 
@@ -127,25 +129,25 @@ do
 
   awk 'BEGIN{tag=0} {if($1=="NeighborAnalyses"){if(tag==0) {tag=1;} else {tag=0;} } if(tag==1) print $0}' out.out | awk '{if(NR>1) print $0}' > input.data
   mv dat.0.gz dat.postMD.gz
-  cp dat_lammps.0.gz dat_lammps.postMD.gz
+#  cp dat_lammps.0.gz dat_lammps.postMD.gz
 
   ### step 2:
   ## run this step if we need to replicate the cell for whatever reasons (so that we can do NEB on bigger system where migration does not see it's image)
   ## this should use dat_lammps.postMD.gz as input
   ## please check before running
-  lmp_git_openmpi_021415 -in /Users/KedarKolluri/Documents/projects/LBNL/expts/scripts/neb/make_input_files/in.start_replicate_nobonds -screen none -log log.replicate
+#  lmp_git_openmpi_021415 -in /Users/KedarKolluri/Documents/projects/LBNL/expts/scripts/neb/make_input_files/in.start_replicate_nobonds -screen none -log log.replicate
 
 ## Because replicate will need bonds to not exist, it is not minimized
 ## So, we need to create those bonds using lbnl_processor and then
 ## rerun lammps and minimize the structure
 
-  lbnl_processor_exec.out start 0 end 2 interval 22 CUTOFF_FILE /Users/KedarKolluri/lib/cutoff_file.illite.coords-first SAVE_LAMMPS CHARGE MOLECULE > out.create_bonds 2>&1
+#  lbnl_processor_exec.out start 0 end 2 interval 22 CUTOFF_FILE /Users/KedarKolluri/lib/cutoff_file.illite.coords-first SAVE_LAMMPS CHARGE MOLECULE > out.create_bonds 2>&1
 
-  gunzip dat_lammps.0.gz; mv dat_lammps.0 dat_lammps.00
+#  gunzip dat_lammps.0.gz; mv dat_lammps.0 dat_lammps.00
 
-  lmp_openmpi_1214 -in /Users/KedarKolluri/Documents/projects/LBNL/expts/scripts/neb/make_input_files/in.illite.minimize -screen none -log log.minimize_replicated
+#  lmp_openmpi_1214 -in /Users/KedarKolluri/Documents/projects/LBNL/expts/scripts/neb/make_input_files/in.illite.minimize -screen none -log log.minimize_replicated
 
-  mv dat.40000.gz dat.0.gz; rm dat_lammps.00;
+#  mv dat.40000.gz dat.0.gz; rm dat_lammps.00;
 
   ### step 3:
   # #the file is now saved as dat.0.gz and converted to dat_lammps.0.gz which is then converted to dat_lammps.begin
@@ -158,50 +160,51 @@ do
   /Users/KedarKolluri/Documents/projects/LBNL/expts/scripts/neb/make_input_files/make_inputfiles_script.bash input.data
 
   cd ../
+fi
 done
 
 ### preparing data for NEB -- END
 
-### postprocess NEB data
-for fileA in {1..20}
+
+# submitting jobs NEB
+# now in 12
+for filea in {1..10}; do cd $filea; for file in *; do if [ -d $file ]; then cd $file/; echo $filea $file; cp ../../run.script_hopper_regular ./; cp ../../in.neb_script ./; qsub run.script_hopper_regular; cd ../; sleep 1; fi; done; cd ../; done; qstat -u 'kkolluri' | wc
+
+
+#now in 24
+for filea in {11..20}; do cd $filea; for file in *; do if [ -d $file ]; then cd $file/; echo $filea $file; cp ../../run.script_edison_regular ./; cp ../../in.neb_script ./; qsub run.script_edison_regular; cd ../; sleep 1; fi; done; cd ../; done; qstat -u 'kkolluri' | wc
+
+
+### collate just the log file for a set of 20 replicas
+for file in {1..20}
 do
-  cd $fileA
-  echo $fileA
-  if [ -e barriers.collate ]
-  then
-    rm barriers.collate
-  fi
-  for file in *
-  do
-    if [ -d $file ]
-    then
-      #echo $file
-      awk '{if($1==2020) print '$file' " " $7 " " $8 " " $3}' $file/log.lammps >> barriers.collate;
-
-      cd $file
-
-      j=0; while [ $j -le 2020 ]
-      do
-      awk '{
-          if( $1=='$j' )
-          {
-              for(i = 10; i <=NF; i=i+2)
-      	{
-      	    print $i " " $(i+1)
-      	}
-          }
-      }' log.lammps > energy.neb.$j
-
-      if [ $(wc energy.neb.$j | awk '{print $1}') -lt 1 ]; then rm energy.neb.$j ; fi
-
-      j=$(($j+100))
-      done # while
-      cd ../
-    fi
-
-  done # for
-cd ../
+  mkdir -p just_enough/$file/
+  cp $file/input.data just_enough/$file/
+  cd $file
+    echo $file
+    for file2 in *
+    do
+      if [ -d $file2 ]
+      then
+        mkdir -p ../just_enough/$file/$file2
+        cp $file2/log.lammps ../just_enough/$file/$file2/
+      fi
+    done
+  cd ../
 done
+
+## BEGIN some other processing of files (moving them around so as to not copy everything)
+### not using currently
+
+awk '{
+    if( $1==500 )
+    {
+        for(i = 10; i <=NF; i=i+2)
+  {
+      print $i " " $(i+1)
+  }
+    }
+}' log.lammps.all > neb.500.all
 
 
 
@@ -238,9 +241,10 @@ fi
 done;
 
 
+
 for fileA in {11..20}
 do
-  echo "coping the folder" $fileA
+  echo "copying the folder" $fileA
   cp -R ../full/$fileA ./
   echo "done"
   echo sleep 3
@@ -265,11 +269,58 @@ do
   cd ../
 done
 
+## BEGIN some other processing of files (moving them around so as to not copy everything)
+### not using currently
+
+
+### postprocess NEB data
+### extract MEPs at regular intervals
+for fileA in {1..20}
+do
+  cd $fileA
+  echo $fileA
+  if [ -e barriers.collate ]
+  then
+    rm barriers.collate
+  fi
+  for file in *
+  do
+    if [ -d $file ]
+    then
+      #echo $file
+      awk '{if($1==4400) print '$file' " " $7 " " $8 " " $3}' $file/log.lammps >> barriers.collate.test;
+      cd $file
+
+      j=0; while [ $j -le 4400 ]
+      do
+      awk '{
+          if( $1=='$j' )
+          {
+              for(i = 10; i <=NF; i=i+2)
+      	{
+      	    print $i " " $(i+1)
+      	}
+          }
+      }' log.lammps > energy.neb.$j
+
+      if [ $(wc energy.neb.$j | awk '{print $1}') -lt 1 ]; then rm energy.neb.$j ; fi
+
+      j=$(($j+1100))
+      done # while
+      cd ../
+    fi
+  done # for
+  cat barriers.collate.test | sort -n > barrier.collate; rm barriers.collate.test
+
+cd ../
+done
+## collate initial, final, and barrier from final MEPS
 enfile="en.file.all"
 for file in *
 do
   if [ -d $file ]
   then
+    echo $file
     cd $file/
     if [ -e $enfile ]
       then
@@ -277,8 +328,8 @@ do
       fi
     for file2 in *
     do
-      filename="energy.neb.2000"
-      if [ -e $file2/energy.neb.2000 ]
+      filename="energy.neb.4400"
+      if [ -e $file2/$filename ]
       then
       awk '{ if (NR==1) {INIT=$2}; printf("%lf %lf %lf\n", $1, $2, $2-INIT)}' $file2/$filename > neb.en.$file2
       awk '{if(NR==1){INIT=$2; MAX=$3}; if(MAX<$3) { MAX=$3}} END {printf("'$file2' %lf %lf %lf %lf\n", INIT, $2, MAX, (INIT+MAX-$2)) }' neb.en.$file2 >> test
@@ -289,6 +340,7 @@ do
   fi
 done
 
+### make plot.plot files
 for file in *
 do
   if [ -d $file ]
@@ -342,4 +394,282 @@ awk
     }
 }
 
-' quality.data.cleaned
+for file in {1..20}
+do
+  cp dat.$file.gz dat.0.gz
+  lbnl_processor_remove_ghosts_exec.out start 0 end 1 interval 22 CUTOFF_FILE /Users/KedarKolluri/lib/cutoff_file.illite.coords-first SAVE_LAMMPS CHARGE MOLECULE > out.$file 2>&1
+  mv dat_lammps.0.gz dat_lammps.$file.gz
+done
+
+
+
+
+
+
+## collect data of atoms moved for analyses (statistical)
+#ID, total coord, Sia, Ala, K, Ob, Gh
+for file in {1..20}
+do
+  if [ -d $file ]
+    then
+    cd $file
+
+    for file2 in  *
+    do
+      if [ -d $file2 ]
+      then
+        cd $file2
+        echo $file $file2
+
+        mkdir postp
+        cp data/dat.2000.1.gz postp/dat.0.gz
+        cp data/dat.2000.48.gz postp/dat.1.gz
+
+        cd postp
+
+        lbnl_processor_latest_exec.out start 0 end 1 interval 10 CUTOFF_FILE /Users/KedarKolluri/lib/cutoff_file.illite.coords-first SAVE_LAMMPS CHARGE MOLECULE > out.1 2>/dev/null
+        lbnl_processor_latest_exec.out start 1 end 2 interval 10 CUTOFF_FILE /Users/KedarKolluri/lib/cutoff_file.illite.coords-first SAVE_LAMMPS CHARGE MOLECULE > out.2 2>/dev/null
+
+        awk '{if(($1=="atom")&&($2=="id")) printf("%d %d %d %d %d %d %lf\n", $3+1, $7, $9, $10, $11, $12, $14)}' out.1 > a.1
+        awk '{if(($1=="atom")&&($2=="id")) printf("%d %d %d %d %d %d %lf\n", $3+1, $7, $9, $10, $11, $12, $14)}' out.2 > a.2
+
+        awk '{if(($1=="total") && ($2=="energy")) printf("%lf\n", $4) }' out.1 > en.1
+        awk '{if(($1=="total") && ($2=="energy")) printf("%lf\n", $4) }' out.2 > en.2
+
+        paste a.1 a.2 > coords.out1
+        awk '{if(($7-$14)^2 > 0.001) printf("%s %d %d %d %d %d %lf\n", $0, -$2+$9, -$3+$10, -$4+$11, -$5+$12, -$6+$13, -$7+$14)}' coords.out1 > coords.out
+        awk '{printf("%s %d %d %d %d %d %lf\n", $0, -$2+$9, -$3+$10, -$4+$11, -$5+$12, -$6+$13, -$7+$14)}' coords.out1 > coords.out.all
+        awk 'BEGIN{totk=0; sia=0; ala=0; k=0; ob=0} {totk=totk+$9-$2; sia=sia+$10-$3; ala=ala+$11-$4; k=k+$12-$5; ob=ob+$13-$6}END{printf("%d %d %d %d %d\n", totk, sia, ala, k, ob)}' coords.out1 > coords.sum
+        paste coords.sum en.1 en.2 > coords_ener.sum
+        rm out.1 out.2 a.1 a.2 en.1 en.2 coords.out1
+
+        cd ../
+
+        cd ../
+      fi
+    done
+
+    cd ../
+  fi
+done
+
+
+for i in {1..20}
+do
+  mkdir $i
+  lbnl_processor_latest.out convert_VESTA filename DFT_smallest_structure-Si2Al.xyz make_illite keep_ghosts CUTOFF_FILE  /Users/KedarKolluri/lib/cutoff_file.illite.make SAVE_LAMMPS CHARGE MOLECULE > $i.out 2>&1
+  cp dat_lammps.20 $i/dat_lammps.0
+  sleep 3
+done
+
+
+
+### script for creating Cs structures
+
+## first take the structure and cut it in half
+## next create illite out of it
+## remember to set the sed srand(1) in c++ file before running this
+## and please change back the c++ code after you run this thing!!
+awk '{if((($4>0.0) && ($4< 10.1))||(NR==2)) print $0}' 6by4by2_structure-Si2Al.xyz > 6by4by1_structure-Si2Al.xyz_data
+
+wc 6by4by1_structure-Si2Al.xyz_data | awk '{print $1-1}' > 6by4by1_structure-Si2Al.xyz
+
+cat 6by4by1_structure-Si2Al.xyz_data >> 6by4by1_structure-Si2Al.xyz
+rm 6by4by1_structure-Si2Al.xyz_data
+
+if [ -d lammps_files ]
+then
+  rm -rf lammps_files
+fi
+mkdir lammps_files
+
+if [ -d vesta_files ]
+then
+  rm -rf vesta_files
+fi
+mkdir vesta_files
+
+vval=1
+for itermain in {1..20}
+do
+  mkdir lammps_files_$itermain
+  for iter in {0..40}
+  do
+    awk 'BEGIN{
+          VAL='$iter'*0.1*'$vval';
+          XVAL=-0.09871188639278138*VAL;
+          ZVAL= 0.9951160552843967*VAL;}
+        {
+          if(NR==2)
+          {
+            printf("%lf %lf %lf %lf %lf %lf\n", $1, $2, $3+VAL, $4, $5, $6)
+          }else if(($1=="K")||($1=="Gh"))
+          {
+            printf("%s %lf %lf %lf\n", $1, $2+XVAL/2, $3, $4+ZVAL/2.0)
+          } else
+          {
+            print $0
+          }
+
+        }
+        ' 6by4by1_structure-Si2Al.xyz > 6by4by1_structure-Si2Al-$iter.xyz
+    lbnl_processor_latest_exec.out convert_VESTA filename 6by4by1_structure-Si2Al-$iter.xyz make_illite keep_ghosts CUTOFF_FILE /Users/KedarKolluri/lib/cutoff_file.illite.make-cs rand_seed $itermain SAVE_LAMMPS CHARGE MOLECULE > out.$iter 2>&1
+    mv dat_lammps.20 lammps_files/dat_lammps.$iter
+    mv dat_VESTA.20.xyz vesta_files/dat_VESTA.$iter.xyz
+  done
+  mv lammps_files/* lammps_files_$itermain/
+done
+
+
+
+
+
+## then run lammps on each for each cs concentration
+for rootfile in {12..14}
+do
+  if [ -d r$rootfile ]
+  then
+  rm -rf r$rootfile
+  fi
+  mkdir r$rootfile
+  sed -e 's/SEED/'$rootfile'/' in.addcesium_T > r$rootfile/in.addcesium_template;
+  cd r$rootfile
+  for file in `seq 0 10 101`
+  do
+    echo $file
+    mkdir cs$file
+    sed -e 's/GFT/'$file'/' in.addcesium_template > cs$file/in.addcesium
+    cd cs$file
+    pwd
+    if [ -e en.output ]
+    then
+      rm en.output
+    fi
+    for file2 in `seq 0 2 41`
+    do
+      cp /Users/KedarKolluri/Documents/projects/LBNL/expts/width_expts/cesium_and_widths_2_corrected/positive/prelim_single/lammps_files_1/dat_lammps.$file2 dat_lammps.00
+      #cp /Users/KKolluri/Documents/projects/LBNL/expts/base_structure/cesium/prelim_single/lammps_files/dat_lammps.$file2 dat_lammps.00
+      if [ -e dat_lammps.00 ]
+      then
+        lmp_git_openmpi_021415 -in in.addcesium -screen none -log log.$file2
+        awk '{if($1==40000) printf("%d %lf %lf %lf %lf\n", '$file2', $3, $4, $5, $6)}' log.$file2 >> en.output
+        mv dat.40000.gz dat.$file2.gz;
+      fi
+    done
+    cd ../
+  done
+  cd ../
+done
+
+## for 0 and 100 only
+
+for file in `seq 1 1 21`
+do
+  echo $file
+  mkdir r$file
+  cp in.addcesium r$file/
+  cd r$file
+  pwd
+  if [ -e en.output ]
+  then
+    rm en.output
+  fi
+  for file2 in `seq 0 2 40`
+  do
+    cp /Users/KedarKolluri/Documents/projects/LBNL/expts/width_expts/cesium_and_widths_2_corrected/positive/prelim_single_many_random/lammps_files_$file/dat_lammps.$file2 dat_lammps.00
+    #cp /Users/KKolluri/Documents/projects/LBNL/expts/base_structure/cesium/prelim_single/lammps_files/dat_lammps.$file2 dat_lammps.00
+    if [ -e dat_lammps.00 ]
+    then
+      lmp_git_openmpi_021415 -in in.addcesium -screen none -log log.$file2
+      awk '{if($1==40000) printf("%d %lf %lf %lf %lf\n", '$file2', $3, $4, $5, $6)}' log.$file2 >> en.output
+      mv dat.40000.gz dat.$file2.gz;
+    fi
+  done
+  cd ../
+done
+
+# intermediate postprocessing for 0 and 100 only
+cd cs0-100
+for file in {1..20}; do mkdir -p r$file/cs0; mkdir -p r$file/cs100; cp ../cs0-reps/r$file/* r$file/cs0/; cp ../cs100-reps/r$file/* r$file/cs100/; done;
+cd ../
+##
+
+## postprocessing
+for file in {1..20}
+do
+  if [ -d r$file ]
+  then
+    for file2 in `seq 0 10 101`
+    do
+      if [ -d r$file/cs$file2 ]
+      then
+        touch tmp.cs$file2
+        awk '{printf("%d %lf %lf\n", $1, $4, $5)}' r$file/cs$file2/en.output > tmp.data
+        paste tmp.data tmp.cs$file2 > data.cs$file2
+        cp data.cs$file2 tmp.cs$file2
+      fi
+    done
+  fi
+done
+rm tmp.*
+for file in `seq 0 10 101`
+do
+  if [ -e data.cs$file ]
+  then
+    awk 'BEGIN{init=0}
+        {
+
+          sum = 0; sumsq = 0;count = 0;
+
+          for(i = 2; i <=NF; i=i+3)
+          {
+            sum = sum + $i;
+            sumsq = sumsq + $i*$i;
+            count = count + 1;
+          }
+          if(NR==1) init = sum/count
+          printf("%lf %lf %lf\n", $1, sum/count-init, sqrt(sumsq-(sum*sum/count))/(count-1))
+        }' data.cs$file > collate.data.$file
+  fi
+done
+
+## collate postprocessed data
+rm collate.min.mean collate.min.low collate.min.hi
+for file in 'seq 0 10 101'
+do
+  if [ -e collate.data.$file ]
+  then
+    awk '{ printf("%lf %lf %d \n", $2, $1, '$file') }' collate.data.$file | sort -n | awk '{if(NR==1) print $3 " " $2 }' >> collate.min.mean
+  fi
+done
+
+
+/*
+To
+Congressman name
+Address
+
+
+Dear Congressman name
+
+I have applied for employment based Adjustment of Status (Green Card) in mm/yyyy for my self and also for my wife at Texas Service center. We gave our 1st fingerprints at local (name of the office ) Immigration office on mm/dd/yyyy . After that we haven’t received any communication from Texas Service Center.
+
+On mm/dd/yyyy , TSC trasnferred our file to local office in (name of the office ). Again we gave our 2nd fingerprints at (name of the office ) on mm/dd/yyyy.
+
+Recently USCIS web site is showing that they are processing employment based I-485 applications as of July 15 2004. Many times I tried to inquire about our cases and there was no reply from them. All of my friends who applied after me got their approvals.
+
+Its been more than 3 yrs when we applied our I-485 and no decision so far. This is making our life very unstable and restless. Also I don’t have any attorney representation. If you could help us in this regard our family would be very grateful to you. The only hope we have is your help.
+
+I am attaching I-485 receipt notices of my wife and myself also I am writing all my details below.
+
+
+Thanks and regards,
+
+
+Your name
+*/
+
+
+
+
+lbnl_processor_latest_exec.out convert_VESTA filename 6by4by2_structure-Si2Al.xyz make_illite keep_ghosts CUTOFF_FILE /Users/KedarKolluri/lib/cutoff_file.illite.make-cs rand_seed 1 SAVE_LAMMPS CHARGE MOLECULE > out.$iter 2>&1
