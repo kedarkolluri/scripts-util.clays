@@ -1,7 +1,7 @@
-set xtics 0.4
+set xtics 0.2
 set key top left
 set grid
-set xrange[*:*]
+set xrange[*:2.6]
 plot 'positive/cs0-100/collate.data.0' using ($1/10):2:(2*$3) w yerrorbars lt -1 pt 7 ps 1 title ''
 replot 'positive/cs0-100/collate.data.0'  using  ($1/10):2 smooth csplines lt -1 title 'Cs=0'
 
@@ -10,6 +10,7 @@ replot 'positive/collate.data.10'  using  ($1/10):2 smooth csplines lt 7 title '
 
 replot 'positive/collate.data.20' using  ($1/10):2:(2*$3) w yerrorbars lt 2 pt 7 ps 1 title ''
 replot 'positive/collate.data.20' using  ($1/10):2 smooth csplines  lt 2 title 'Cs=0.2'
+
 
 replot 'positive/collate.data.40' using  ($1/10):2:(2*$3) w yerrorbars lt 3 pt 7 ps 1 title ''
 replot 'positive/collate.data.40' using  ($1/10):2 smooth csplines  lt 3 title 'Cs=0.4'
@@ -20,9 +21,15 @@ replot 'positive/collate.data.50' using  ($1/10):2 smooth csplines  lt 6 title "
 replot 'positive/collate.data.60' using  ($1/10):2:(2*$3) w yerrorbars lt 4 pt 7 ps 1 title ''
 replot 'positive/collate.data.60' using  ($1/10):2 smooth csplines  lt 4 title "Cs=0.6"
 
+replot 'positive/collate.data.70' using  ($1/10):2:(2*$3) w yerrorbars lt 8 pt 7 ps 1 title ''
+replot 'positive/collate.data.70' using  ($1/10):2 smooth csplines  lt 8 title 'Cs=0.7'
 
 replot 'positive/collate.data.80' using  ($1/10):2:(2*$3) w yerrorbars lt 5 pt 7 ps 1 title '' #axes x1y2
 replot 'positive/collate.data.80' using  ($1/10):2 smooth csplines  lt 5 title 'Cs=0.8' #axes x1y2
+
+replot 'positive/collate.data.90' using  ($1/10):2:(2*$3) w yerrorbars lt 9 pt 7 ps 1 title ''
+replot 'positive/collate.data.90' using  ($1/10):2 smooth csplines  lt 9 title 'Cs=0.9'
+
 
 replot 'positive/cs0-100/collate.data.100' using  ($1/10):2:(2*$3) w yerrorbars lt 1 pt 7 ps 1 title '' #axes x1y2
 replot 'positive/cs0-100/collate.data.100' using  ($1/10):2 smooth csplines  lt 1 title 'Cs=1.0' #axes x1y2
