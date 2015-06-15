@@ -465,67 +465,8 @@ done
 
 
 
-# intermediate postprocessing for 0 and 100 only
-cd cs0-100
-for file in {1..20}; do mkdir -p r$file/cs0; mkdir -p r$file/cs100; cp ../cs0-reps/r$file/* r$file/cs0/; cp ../cs100-reps/r$file/* r$file/cs100/; done;
-cd ../
-##
 
-## postprocessing
-for file in {1..20}
-do
-  if [ -d r$file ]
-  then
-    for file2 in `seq 0 10 101`
-    do
-      if [ -d r$file/cs$file2 ]
-      then
-        touch tmp.cs$file2
-        awk '{printf("%d %lf %lf\n", $1, $4, $5)}' r$file/cs$file2/en.output > tmp.data
-        paste tmp.data tmp.cs$file2 > data.cs$file2
-        cp data.cs$file2 tmp.cs$file2
-      fi
-    done
-  fi
-done
-rm tmp.*
-for file in `seq 0 10 101`
-do
-  if [ -e data.cs$file ]
-  then
-    awk 'BEGIN{init=0}
-        {
 
-          sum = 0; sumsq = 0;count = 0;
-
-          for(i = 2; i <=NF; i=i+3)
-          {
-            sum = sum + $i;
-            sumsq = sumsq + $i*$i;
-            count = count + 1;
-          }
-          if(NR==1) init = sum/count
-          if(count > 1)
-          {
-            printf("%lf %lf %lf\n", $1, sum/count-init, sqrt(sumsq-(sum*sum/count))/(count-1))
-          }else
-          {
-            printf("%lf %lf %lf\n", $1, sum/count-init, 0)
-          }
-
-        }' data.cs$file > collate.data.$file
-  fi
-done
-
-## collate postprocessed data
-rm collate.min.mean collate.min.low collate.min.hi
-for file in 'seq 0 10 101'
-do
-  if [ -e collate.data.$file ]
-  then
-    awk '{ printf("%lf %lf %d \n", $2, $1, '$file') }' collate.data.$file | sort -n | awk '{if(NR==1) print $3 " " $2 }' >> collate.min.mean
-  fi
-done
 
 
 /*
