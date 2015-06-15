@@ -464,129 +464,6 @@ done
 
 
 
-### script for creating Cs structures
-
-## first take the structure and cut it in half
-## next create illite out of it
-## remember to set the sed srand(1) in c++ file before running this
-## and please change back the c++ code after you run this thing!!
-awk '{if((($4>0.0) && ($4< 10.1))||(NR==2)) print $0}' 6by4by2_structure-Si2Al.xyz > 6by4by1_structure-Si2Al.xyz_data
-
-wc 6by4by1_structure-Si2Al.xyz_data | awk '{print $1-1}' > 6by4by1_structure-Si2Al.xyz
-
-cat 6by4by1_structure-Si2Al.xyz_data >> 6by4by1_structure-Si2Al.xyz
-rm 6by4by1_structure-Si2Al.xyz_data
-
-if [ -d lammps_files ]
-then
-  rm -rf lammps_files
-fi
-mkdir lammps_files
-
-if [ -d vesta_files ]
-then
-  rm -rf vesta_files
-fi
-mkdir vesta_files
-
-vval=1
-for itermain in {1..20}
-do
-  mkdir lammps_files_$itermain
-  for iter in {0..40}
-  do
-    awk 'BEGIN{
-          VAL='$iter'*0.1*'$vval';
-          XVAL=-0.09871188639278138*VAL;
-          ZVAL= 0.9951160552843967*VAL;}
-        {
-          if(NR==2)
-          {
-            printf("%lf %lf %lf %lf %lf %lf\n", $1, $2, $3+VAL, $4, $5, $6)
-          }else if(($1=="K")||($1=="Gh"))
-          {
-            printf("%s %lf %lf %lf\n", $1, $2+XVAL/2, $3, $4+ZVAL/2.0)
-          } else
-          {
-            print $0
-          }
-
-        }
-        ' 6by4by1_structure-Si2Al.xyz > 6by4by1_structure-Si2Al-$iter.xyz
-    lbnl_processor_latest_exec.out convert_VESTA filename 6by4by1_structure-Si2Al-$iter.xyz make_illite keep_ghosts CUTOFF_FILE /Users/KedarKolluri/lib/cutoff_file.illite.make-cs rand_seed $itermain SAVE_LAMMPS CHARGE MOLECULE > out.$iter 2>&1
-    mv dat_lammps.20 lammps_files/dat_lammps.$iter
-    mv dat_VESTA.20.xyz vesta_files/dat_VESTA.$iter.xyz
-  done
-  mv lammps_files/* lammps_files_$itermain/
-done
-
-
-
-
-
-## then run lammps on each for each cs concentration
-for rootfile in {12..14}
-do
-  if [ -d r$rootfile ]
-  then
-  rm -rf r$rootfile
-  fi
-  mkdir r$rootfile
-  sed -e 's/SEED/'$rootfile'/' in.addcesium_T > r$rootfile/in.addcesium_template;
-  cd r$rootfile
-  for file in `seq 0 10 101`
-  do
-    echo $file
-    mkdir cs$file
-    sed -e 's/GFT/'$file'/' in.addcesium_template > cs$file/in.addcesium
-    cd cs$file
-    pwd
-    if [ -e en.output ]
-    then
-      rm en.output
-    fi
-    for file2 in `seq 0 2 41`
-    do
-      cp /Users/KedarKolluri/Documents/projects/LBNL/expts/width_expts/cesium_and_widths_2_corrected/positive/prelim_single/lammps_files_1/dat_lammps.$file2 dat_lammps.00
-      #cp /Users/KKolluri/Documents/projects/LBNL/expts/base_structure/cesium/prelim_single/lammps_files/dat_lammps.$file2 dat_lammps.00
-      if [ -e dat_lammps.00 ]
-      then
-        lmp_git_openmpi_021415 -in in.addcesium -screen none -log log.$file2
-        awk '{if($1==40000) printf("%d %lf %lf %lf %lf\n", '$file2', $3, $4, $5, $6)}' log.$file2 >> en.output
-        mv dat.40000.gz dat.$file2.gz;
-      fi
-    done
-    cd ../
-  done
-  cd ../
-done
-
-## for 0 and 100 only
-
-for file in `seq 1 1 21`
-do
-  echo $file
-  mkdir r$file
-  cp in.addcesium r$file/
-  cd r$file
-  pwd
-  if [ -e en.output ]
-  then
-    rm en.output
-  fi
-  for file2 in `seq 0 2 40`
-  do
-    cp /Users/KedarKolluri/Documents/projects/LBNL/expts/width_expts/cesium_and_widths_2_corrected/positive/prelim_single_many_random/lammps_files_$file/dat_lammps.$file2 dat_lammps.00
-    #cp /Users/KKolluri/Documents/projects/LBNL/expts/base_structure/cesium/prelim_single/lammps_files/dat_lammps.$file2 dat_lammps.00
-    if [ -e dat_lammps.00 ]
-    then
-      lmp_git_openmpi_021415 -in in.addcesium -screen none -log log.$file2
-      awk '{if($1==40000) printf("%d %lf %lf %lf %lf\n", '$file2', $3, $4, $5, $6)}' log.$file2 >> en.output
-      mv dat.40000.gz dat.$file2.gz;
-    fi
-  done
-  cd ../
-done
 
 # intermediate postprocessing for 0 and 100 only
 cd cs0-100
@@ -628,7 +505,14 @@ do
             count = count + 1;
           }
           if(NR==1) init = sum/count
-          printf("%lf %lf %lf\n", $1, sum/count-init, sqrt(sumsq-(sum*sum/count))/(count-1))
+          if(count > 1)
+          {
+            printf("%lf %lf %lf\n", $1, sum/count-init, sqrt(sumsq-(sum*sum/count))/(count-1))
+          }else
+          {
+            printf("%lf %lf %lf\n", $1, sum/count-init, 0)
+          }
+
         }' data.cs$file > collate.data.$file
   fi
 done
