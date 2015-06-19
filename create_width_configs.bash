@@ -1,5 +1,5 @@
 ### script for creating Cs structures
-
+##
 ## first take the structure and cut it in half
 ## next create illite out of it
 ## remember to set the sed srand(1) in c++ file before running this
