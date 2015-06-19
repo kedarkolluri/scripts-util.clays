@@ -30,7 +30,6 @@ replot 'positive/collate.data.80' using  ($1/10):2 smooth csplines  lt 5 title '
 replot 'positive/collate.data.90' using  ($1/10):2:(2*$3) w yerrorbars lt 9 pt 7 ps 1 title ''
 replot 'positive/collate.data.90' using  ($1/10):2 smooth csplines  lt 9 title 'Cs=0.9'
 
-
 replot 'positive/cs0-100/collate.data.100' using  ($1/10):2:(2*$3) w yerrorbars lt 1 pt 7 ps 1 title '' #axes x1y2
 replot 'positive/cs0-100/collate.data.100' using  ($1/10):2 smooth csplines  lt 1 title 'Cs=1.0' #axes x1y2
 
@@ -147,7 +146,7 @@ done
 
 set xrange[100000:]
 a=8
-plot '0/log.lammps' using 1:a w l title '0', '4/log.lammps' using 1:a w l title '4', '8/log.lammps' using 1:a w l title '8', '12/log.lammps' using 1:a w l title '12', '16/log.lammps' using 1:a w l title '16', '20/log.lammps' using 1:a w l title '20', '24/log.lammps' using 1:a w l title '24'
+plot '0/log.lammps' using 1:a w l title '0', '2/log.lammps' using 1:a w l title '2', '4/log.lammps' using 1:a w l title '4', '6/log.lammps' using 1:a w l title '6', '8/log.lammps' using 1:a w l title '8', '10/log.lammps' using 1:a w l title '10', '12/log.lammps' using 1:a w l title '12', '14/log.lammps' using 1:a w l title '14', '16/log.lammps' using 1:a w l title '16', '18/log.lammps' using 1:a w l title '18', '20/log.lammps' using 1:a w l title '20'
 
 
 replot '2/log.lammps' using 1:a w l title '2', '6/log.lammps' using 1:a w l title '6', '10/log.lammps' using 1:a w l title '10', '14/log.lammps' using 1:a w l title '14', '18/log.lammps' using 1:a w l title '18', '22/log.lammps' using 1:a w l title '22', '28/log.lammps' using 1:a w l title '28'

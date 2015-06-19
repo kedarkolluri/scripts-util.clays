@@ -9,6 +9,9 @@
 #awk '{if((($4>0.0) && ($4< 10.1))||(NR==2)) print $0}' 6by4by2_structure-Si2Al.xyz > 6by4by1_structure-Si2Al.xyz_data
 #wc 6by4by1_structure-Si2Al.xyz_data | awk '{print $1-1}' > 6by4by1_structure-Si2Al.xyz
 
+
+
+
 lbnl_processor_latest_exec.out convert_VESTA filename 6by4by2_structure-Si2Al.xyz make_illite keep_ghosts CUTOFF_FILE /Users/KedarKolluri/lib/cutoff_file.illite.make rand_seed 1 SAVE_LAMMPS CHARGE MOLECULE > out.out
 cp dat_VESTA.20.xyz USETHIS-6by4by2_structure-Si2Al.xyz
 
@@ -27,6 +30,7 @@ do
   mkdir lammps_files_$itermain
   for iter in {0..40}
   do
+
     awk 'BEGIN{
           VAL='$iter'*0.2*'$vval';
           XVAL=-0.09871188639278138*VAL;
