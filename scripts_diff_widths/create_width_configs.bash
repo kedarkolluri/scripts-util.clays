@@ -201,6 +201,7 @@ done
 ### postprocessing
 
 # intermediate postprocessing for 0 and 100 only
+mkdir cs0-100
 cd cs0-100
 for file in {1..20}; do mkdir -p r$file/cs0; mkdir -p r$file/cs100; cp ../cs0-reps/r$file/* r$file/cs0/; cp ../cs100-reps/r$file/* r$file/cs100/; done;
 cd ../

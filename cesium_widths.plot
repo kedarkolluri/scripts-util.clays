@@ -34,6 +34,19 @@ replot 'positive/cs0-100/collate.data.100' using  ($1/10):2:(2*$3) w yerrorbars 
 replot 'positive/cs0-100/collate.data.100' using  ($1/10):2 smooth csplines  lt 1 title 'Cs=1.0' #axes x1y2
 
 
+####
+plot 'collate.data.0' using ($1/10):2:(2*$3) w yerrorbars lt -1 pt 7 ps 1 title ''
+replot 'collate.data.0'  using  ($1/10):2 smooth csplines lt -1 title 'Cs=0'
+replot 'collate.data.100' using  ($1/10):2:(2*$3) w yerrorbars lt 1 pt 7 ps 1 title '' #axes x1y2
+replot 'collate.data.100' using  ($1/10):2 smooth csplines  lt 1 title 'Cs=1.0' #axes x1y2
+
+
+plot 'collate.data.0' using ($1/10-2.0):2:(2*$3) w yerrorbars lt -1 pt 7 ps 1 title ''
+replot 'collate.data.0'  using  ($1/10-2.0):2 smooth csplines lt -1 title 'Cs=0'
+replot 'collate.data.100' using  ($1/10-2.0):2:(2*$3) w yerrorbars lt 1 pt 7 ps 1 title '' #axes x1y2
+replot 'collate.data.100' using  ($1/10-2.0):2 smooth csplines  lt 1 title 'Cs=1.0' #axes x1y2
+
+
 #for file in `seq 10 10 90`; do awk '{print '$file' " " $2}' collate.data.$file | sort -n | awk '{if(NR==1) print $0}'; done;
 
 a=3.931110 #0
