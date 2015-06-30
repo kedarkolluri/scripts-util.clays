@@ -53,7 +53,7 @@ awk '{if($1=='$id') print $0}' log.lammps.$tag | awk 'END{print '$tag' " " $5}' 
 
 #echo "extracted energy"
 
-lbnl_processor_exec.out start $id end $(($id+2)) interval 22 CUTOFF_FILE /Users/KedarKolluri/lib/cutoff_file.illite.coords-first SAVE_LAMMPS CHARGE MOLECULE > out.out 2>&1
+lbnl_processor_exec.out start $id end $(($id+2)) interval 22 CUTOFF_FILE /Users/KedarKolluri/lib/cutoff_file.illite.coords-first-k1gh1cs SAVE_LAMMPS CHARGE MOLECULE > out.out 2>&1
 
 #echo "created lammps file for this"
 

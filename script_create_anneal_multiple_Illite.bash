@@ -123,7 +123,7 @@ do
   ##-in /Users/KedarKolluri/Documents/projects/LBNL/expts/scripts/neb/make_input_files/in.illite.minimize -screen none
   #mv dat.40000.gz dat.0.gz; rm dat_lammps.00;
 
-  lbnl_processor_exec.out start 0 end 2 interval 22 CUTOFF_FILE /Users/KedarKolluri/lib/cutoff_file.illite.coords-first SAVE_LAMMPS CHARGE MOLECULE > out.out 2>/dev/null
+  lbnl_processor_exec.out start 0 end 2 interval 22 CUTOFF_FILE /Users/KedarKolluri/lib/cutoff_file.illite.coords-first-k1gh1cs SAVE_LAMMPS CHARGE MOLECULE > out.out 2>/dev/null
 
   ## change the file to something else so it is saved
 
@@ -151,7 +151,7 @@ do
 
   ### step 3:
   # #the file is now saved as dat.0.gz and converted to dat_lammps.0.gz which is then converted to dat_lammps.begin
-  lbnl_processor_exec.out start 0 end 2 interval 22 CUTOFF_FILE /Users/KedarKolluri/lib/cutoff_file.illite.coords-first SAVE_LAMMPS CHARGE MOLECULE > out.out 2>&1
+  lbnl_processor_exec.out start 0 end 2 interval 22 CUTOFF_FILE /Users/KedarKolluri/lib/cutoff_file.illite.coords-first-k1gh1cs SAVE_LAMMPS CHARGE MOLECULE > out.out 2>&1
 
   gunzip dat_lammps.0.gz
   mv dat_lammps.0 dat_lammps.begin
