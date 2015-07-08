@@ -41,11 +41,11 @@ do
         }' $initfile > dat_lammps.00
 
 
-cp /Users/KedarKolluri/Documents/projects/LBNL/expts/scripts/neb/make_input_files/in.illite.minimize ./
+cp /Users/KedarKolluri/Documents/projects/LBNL/expts/scripts/neb/make_input_files/in.illite.minimize_K1 ./
 
 #echo "running lammps now to find end structure"
 
-lmp_openmpi_1214 -in in.illite.minimize -screen none -log log.lammps.$tag
+lmp_openmpi_1214 -in in.illite.minimize_K1 -screen none -log log.lammps.$tag
 
 #echo "finished lammps run"
 
