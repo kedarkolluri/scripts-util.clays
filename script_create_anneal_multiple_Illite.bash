@@ -107,7 +107,7 @@ awk '{if($1=="processing") {p = $4}; if($1=="atom") print p " " $3 " " $11 " " $
 ### PLEASE READ in FULL BEFORE RUNNING THIS-
 ### It has all steps some of which you may not want to use every time!
 ###/Users/KedarKolluri/Documents/projects/LBNL/expts/base_structure/for_dft/collate/without_ghosts/for_neb
-for file in {0..28}
+for file in {4..8}
 do
   if [ -d $file ]
   then
@@ -461,39 +461,6 @@ do
   cp dat_lammps.20 $i/dat_lammps.0
   sleep 3
 done
-
-
-
-
-
-
-
-
-/*
-To
-Congressman name
-Address
-
-
-Dear Congressman name
-
-I have applied for employment based Adjustment of Status (Green Card) in mm/yyyy for my self and also for my wife at Texas Service center. We gave our 1st fingerprints at local (name of the office ) Immigration office on mm/dd/yyyy . After that we haven’t received any communication from Texas Service Center.
-
-On mm/dd/yyyy , TSC trasnferred our file to local office in (name of the office ). Again we gave our 2nd fingerprints at (name of the office ) on mm/dd/yyyy.
-
-Recently USCIS web site is showing that they are processing employment based I-485 applications as of July 15 2004. Many times I tried to inquire about our cases and there was no reply from them. All of my friends who applied after me got their approvals.
-
-Its been more than 3 yrs when we applied our I-485 and no decision so far. This is making our life very unstable and restless. Also I don’t have any attorney representation. If you could help us in this regard our family would be very grateful to you. The only hope we have is your help.
-
-I am attaching I-485 receipt notices of my wife and myself also I am writing all my details below.
-
-
-Thanks and regards,
-
-
-Your name
-*/
-
 
 
 
