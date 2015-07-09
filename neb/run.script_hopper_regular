@@ -4,20 +4,5 @@
 #PBS -N illite_neb-single
 #PBS -j oe
 
-cd $PBS_O_WORKDIR
-#for file in 24*;
-#do
-#if [ -d $file ]
-#then 
-#cd $file
-#echo "*begin*"
-#echo $file
-#pwd
 
 aprun -n 48 lmp_1214_replica_mpi_hopper -partition 48x1 -in in.neb_script -screen none
-
-#echo "*done*"
-#cd ../
-#fi
-#done
-
