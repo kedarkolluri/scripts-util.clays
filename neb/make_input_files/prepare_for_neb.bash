@@ -7,7 +7,7 @@ for foldera in {0..20}; do if [ -d $foldera ]; then for folderb in {0..20}; do i
 ### PLEASE READ in FULL BEFORE RUNNING THIS-
 ### It has all steps some of which you may not want to use every time!
 ###/Users/KedarKolluri/Documents/projects/LBNL/expts/base_structure/for_dft/collate/without_ghosts/for_neb
-for file in {0..3}
+for file in {5..20}
 do
   if [ -d $file ]
   then
